@@ -1,8 +1,11 @@
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageFile
 
 # Register AVIF support
 import pillow_avif
+
+# Handle truncated images safely
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 SUPPORTED_EXTENSIONS = {
@@ -20,7 +23,7 @@ SUPPORTED_EXTENSIONS = {
 
 def convert_image(image_path, output_folder=None, quality=80, lossless=False):
     """
-    Convert a single image to WebP.
+    Convert a single image to WebP with security checks and memory safety.
 
     Returns:
         (True, output_path) on success
@@ -29,20 +32,17 @@ def convert_image(image_path, output_folder=None, quality=80, lossless=False):
 
     try:
 
-        image_path = Path(image_path)
+        image_path = Path(image_path).resolve()
+
+        if not image_path.is_file():
+            return False, "File does not exist or is unreadable"
 
         if image_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
             return False, "Unsupported file type"
 
-        img = Image.open(image_path)
-
-        # Preserve transparency where possible
-        if img.mode not in ("RGB", "RGBA"):
-            img = img.convert("RGBA")
-
         if output_folder:
 
-            output_folder = Path(output_folder)
+            output_folder = Path(output_folder).resolve()
             output_folder.mkdir(parents=True, exist_ok=True)
 
             output_file = output_folder / f"{image_path.stem}.webp"
@@ -57,16 +57,33 @@ def convert_image(image_path, output_folder=None, quality=80, lossless=False):
             "lossless": bool(lossless)
         }
 
-        if getattr(img, "is_animated", False):
-            save_kwargs["save_all"] = True
+        # Memory safe opening with context manager to prevent file locks & leaks
+        with Image.open(image_path) as img:
 
-        img.save(
-            output_file,
-            "WEBP",
-            **save_kwargs
-        )
+            if getattr(img, "is_animated", False):
+                save_kwargs["save_all"] = True
+
+            # Preserve transparency where possible
+            if img.mode not in ("RGB", "RGBA"):
+                converted_img = img.convert("RGBA")
+                converted_img.save(
+                    output_file,
+                    "WEBP",
+                    **save_kwargs
+                )
+                converted_img.close()
+            else:
+                img.save(
+                    output_file,
+                    "WEBP",
+                    **save_kwargs
+                )
 
         return True, output_file
+
+    except Image.DecompressionBombError:
+
+        return False, "Image resolution exceeds safety limits (decompression bomb protection)"
 
     except Exception as e:
 
