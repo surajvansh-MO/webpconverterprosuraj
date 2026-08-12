@@ -181,6 +181,14 @@ class FileList(ctk.CTkFrame):
     # Table Header Row
     # ==================================================
 
+    # ==================================================
+    # Table Header Row
+    # ==================================================
+
+    # ==================================================
+    # Table Header Row
+    # ==================================================
+
     def create_header(self):
         header = ctk.CTkFrame(
             self.file_frame,
@@ -190,33 +198,54 @@ class FileList(ctk.CTkFrame):
         )
         header.pack(fill="x", pady=(0, 6), padx=2)
 
-        ctk.CTkLabel(
-            header,
-            text="File Name",
-            anchor="w",
-            font=("Segoe UI", 12, "bold"),
-            text_color="#a1a1aa"
-        ).pack(side="left", padx=(12, 0), expand=True, fill="x")
-
-        for text, width in [("Format", 75), ("Status", 130)]:
-            ctk.CTkLabel(
-                header,
-                text=text,
-                width=width,
-                anchor="w",
-                font=("Segoe UI", 12, "bold"),
-                text_color="#a1a1aa"
-            ).pack(side="left")
-
-        # Header for Actions column
+        # Pack Actions header FIRST on right
         ctk.CTkLabel(
             header,
             text="Actions",
-            width=160,
+            width=155,
             anchor="center",
             font=("Segoe UI", 12, "bold"),
             text_color="#a1a1aa"
+        ).pack(side="right", padx=(0, 8))
+
+        # Pack Status header on right
+        ctk.CTkLabel(
+            header,
+            text="Status",
+            width=110,
+            anchor="w",
+            font=("Segoe UI", 12, "bold"),
+            text_color="#a1a1aa"
         ).pack(side="right", padx=(0, 10))
+
+        # Pack Format header on right
+        ctk.CTkLabel(
+            header,
+            text="Format",
+            width=65,
+            anchor="w",
+            font=("Segoe UI", 12, "bold"),
+            text_color="#a1a1aa"
+        ).pack(side="right", padx=(0, 10))
+
+        # Pack File Name header on left
+        ctk.CTkLabel(
+            header,
+            text="File Name",
+            width=150,
+            anchor="w",
+            font=("Segoe UI", 12, "bold"),
+            text_color="#a1a1aa"
+        ).pack(side="left", padx=(12, 0))
+
+        # Pack Output Path header to fill remaining middle space
+        ctk.CTkLabel(
+            header,
+            text="Output Path",
+            anchor="w",
+            font=("Segoe UI", 12, "bold"),
+            text_color="#a1a1aa"
+        ).pack(side="left", padx=(10, 10), expand=True, fill="x")
 
     # ==================================================
     # Size Formatter
@@ -277,10 +306,32 @@ class FileList(ctk.CTkFrame):
             row.configure(fg_color="#18181b" if index % 2 == 0 else "#252528")
 
     # ==================================================
+    # Output Path Helper
+    # ==================================================
+
+    def shorten_path(self, path_str: str, max_len: int = 40) -> str:
+        if len(path_str) <= max_len:
+            return path_str
+        return path_str[:14] + "..." + path_str[-(max_len - 17):]
+
+    def get_file_output_path(self, path: Path, output_folder=None) -> str:
+        if output_folder:
+            return str(Path(output_folder) / f"{path.stem}.webp")
+        return str(path.parent / f"{path.stem}.webp")
+
+    def update_output_paths(self, output_folder=None):
+        self.current_output_folder = output_folder
+        for row in self.file_rows:
+            if hasattr(row, "file_path") and hasattr(row, "output_label"):
+                out_path_str = self.get_file_output_path(row.file_path, output_folder)
+                row.output_label.configure(text=self.shorten_path(out_path_str))
+
+    # ==================================================
     # Populate Files
     # ==================================================
 
-    def populate(self, files, statuses=None):
+    def populate(self, files, statuses=None, output_folder=None):
+        self.current_output_folder = output_folder
         for widget in self.file_frame.winfo_children():
             widget.destroy()
 
@@ -307,16 +358,51 @@ class FileList(ctk.CTkFrame):
             )
             row.pack(fill="x", pady=2, padx=2)
 
-            # File Name Label
-            ctk.CTkLabel(
-                row,
-                text=path.name,
-                anchor="w",
-                font=("Segoe UI", 12),
-                text_color="#f4f4f5"
-            ).pack(side="left", padx=(12, 0), expand=True, fill="x")
+            # 1. Action Buttons Container packed FIRST on the right edge
+            actions_frame = ctk.CTkFrame(row, fg_color="transparent")
+            actions_frame.pack(side="right", padx=(5, 8))
 
-            # Format Badge Pill
+            convert_btn = ctk.CTkButton(
+                actions_frame,
+                text="⚡ Convert",
+                width=70,
+                height=26,
+                corner_radius=5,
+                fg_color="#059669",
+                hover_color="#047857",
+                font=("Segoe UI", 11, "bold"),
+                command=lambda p=path: self.master.convert_single_file_by_path(p)
+            )
+            convert_btn.pack(side="left", padx=(0, 4))
+
+            remove_btn = ctk.CTkButton(
+                actions_frame,
+                text="✕ Remove",
+                width=70,
+                height=26,
+                corner_radius=5,
+                fg_color="#dc2626",
+                hover_color="#b91c1c",
+                font=("Segoe UI", 11, "bold"),
+                command=lambda p=path: self.master.remove_file_by_path(p)
+            )
+            remove_btn.pack(side="left")
+
+            # 2. Status Label packed on the right
+            is_converted = "Converted" in status_text or "✅" in status_text
+            is_failed = "Failed" in status_text or "❌" in status_text
+            status_col = "#4ade80" if is_converted else ("#f87171" if is_failed else "#a1a1aa")
+
+            status = ctk.CTkLabel(
+                row,
+                text=status_text,
+                width=110,
+                font=("Segoe UI", 12),
+                text_color=status_col
+            )
+            status.pack(side="right", padx=(0, 10))
+
+            # 3. Format Badge Pill packed on the right
             format_badge = ctk.CTkFrame(
                 row,
                 fg_color="#0f172a",
@@ -326,7 +412,7 @@ class FileList(ctk.CTkFrame):
                 width=55,
                 height=22
             )
-            format_badge.pack(side="left", padx=(0, 20))
+            format_badge.pack(side="right", padx=(0, 10))
             format_badge.pack_propagate(False)
 
             ctk.CTkLabel(
@@ -336,52 +422,30 @@ class FileList(ctk.CTkFrame):
                 text_color=format_col
             ).pack(expand=True)
 
-            # Status Label
-            is_converted = "Converted" in status_text or "✅" in status_text
-            is_failed = "Failed" in status_text or "❌" in status_text
-
-            status_col = "#4ade80" if is_converted else ("#f87171" if is_failed else "#a1a1aa")
-
-            status = ctk.CTkLabel(
+            # 4. File Name Label packed on the left
+            ctk.CTkLabel(
                 row,
-                text=status_text,
-                width=130,
+                text=path.name,
+                width=150,
+                anchor="w",
                 font=("Segoe UI", 12),
-                text_color=status_col
+                text_color="#f4f4f5"
+            ).pack(side="left", padx=(12, 0))
+
+            # 5. Output Path Label packed in remaining middle space
+            out_path_str = self.get_file_output_path(path, output_folder)
+            output_label = ctk.CTkLabel(
+                row,
+                text=self.shorten_path(out_path_str),
+                anchor="w",
+                font=("Segoe UI", 11),
+                text_color="#a1a1aa"
             )
-            status.pack(side="left")
+            output_label.pack(side="left", padx=(10, 10), expand=True, fill="x")
+
             row.file_path = path
             row.status_label = status
-
-            # Action Buttons Container (Convert + Remove)
-            actions_frame = ctk.CTkFrame(row, fg_color="transparent")
-            actions_frame.pack(side="right", padx=(5, 8))
-
-            convert_btn = ctk.CTkButton(
-                actions_frame,
-                text="⚡ Convert",
-                width=72,
-                height=26,
-                corner_radius=5,
-                fg_color="#059669",
-                hover_color="#047857",
-                font=("Segoe UI", 11, "bold"),
-                command=lambda p=path: self.master.convert_single_file_by_path(p)
-            )
-            convert_btn.pack(side="left", padx=(0, 6))
-
-            remove_btn = ctk.CTkButton(
-                actions_frame,
-                text="✕ Remove",
-                width=72,
-                height=26,
-                corner_radius=5,
-                fg_color="#dc2626",
-                hover_color="#b91c1c",
-                font=("Segoe UI", 11, "bold"),
-                command=lambda p=path: self.master.remove_file_by_path(p)
-            )
-            remove_btn.pack(side="left")
+            row.output_label = output_label
 
             self.file_rows.append(row)
 

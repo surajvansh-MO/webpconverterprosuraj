@@ -48,7 +48,7 @@ class AppActions:
 
         if added:
 
-            self.file_list.populate(self.selected_files, self.file_statuses)
+            self.file_list.populate(self.selected_files, self.file_statuses, self.output_folder)
 
             self.file_list.set_status(
                 f"{len(self.selected_files)} file(s) selected"
@@ -128,6 +128,8 @@ class AppActions:
         self.output_folder = folder
 
         self.sidebar.set_output_folder(folder)
+
+        self.file_list.update_output_paths(folder)
 
         self.file_list.set_status(
             "Output folder selected"

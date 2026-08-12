@@ -1,0 +1,46 @@
+========================================================================
+                     WebP Converter Pro - Quick Start Guide
+========================================================================
+
+WebP Converter Pro is a portable desktop app. No installation or admin
+privileges are required to run this software.
+
+------------------------------------------------------------------------
+HOW TO RUN THE APPLICATION:
+------------------------------------------------------------------------
+
+1. EXTRACT ALL FILES:
+   - Right-click the "WebPConverterPro_Portable.zip" file.
+   - Select "Extract All..." (or use 7-Zip / WinRAR).
+   - Choose a destination folder (e.g., Desktop or Downloads) and click Extract.
+
+2. LAUNCH THE PROGRAM:
+   - Open the extracted folder.
+   - Double-click on "WebPConverterPro.exe" to start the application.
+
+3. OPTIONAL (QUICK ACCESS):
+   - Right-click "WebPConverterPro.exe" and select "Pin to taskbar" or
+     "Create shortcut" to launch it quickly anytime.
+
+------------------------------------------------------------------------
+HOW TO CONVERT IMAGES:
+------------------------------------------------------------------------
+
+1. ADD IMAGES:
+   - Click "Files" to pick images, "Folder" to select an entire folder,
+     or simply Drag & Drop image files into the app.
+
+2. SET QUALITY & OUTPUT DESTINATION:
+   - Adjust the Quality slider (e.g., 80%) or select Lossless mode.
+   - By default, WebP images are saved in the same directory as the source.
+     Click "Choose" under Destination Folder to pick a custom output folder.
+
+3. START CONVERSION:
+   - Click "Start Conversion" to convert all images into WebP format!
+
+------------------------------------------------------------------------
+SUPPORT & DEVELOPER INFO:
+------------------------------------------------------------------------
+Developed by: Suraj Kumar
+Contact Email: suraj.kumar@xecurify.com
+========================================================================
