@@ -238,7 +238,7 @@ class FileList(ctk.CTkFrame):
         ctk.CTkLabel(
             header,
             text="Status",
-            width=110,
+            width=140,
             anchor="w",
             font=("Segoe UI", 12, "bold"),
             text_color="#a1a1aa"
@@ -341,9 +341,8 @@ class FileList(ctk.CTkFrame):
         return path_str[:14] + "..." + path_str[-(max_len - 17):]
 
     def get_file_output_path(self, path: Path, output_folder=None) -> str:
-        if output_folder:
-            return str(Path(output_folder) / f"{path.stem}.webp")
-        return str(path.parent / f"{path.stem}.webp")
+        from converter import get_output_path
+        return str(get_output_path(path, output_folder))
 
     def update_output_paths(self, output_folder=None):
         self.current_output_folder = output_folder
@@ -415,15 +414,15 @@ class FileList(ctk.CTkFrame):
             remove_btn.pack(side="left")
 
             # 2. Status Label packed on the right
-            is_converted = "Converted" in status_text or "✅" in status_text
+            is_converted = "Converted" in status_text or "Compressed" in status_text or "✅" in status_text
             is_failed = "Failed" in status_text or "❌" in status_text
             status_col = "#4ade80" if is_converted else ("#f87171" if is_failed else "#a1a1aa")
 
             status = ctk.CTkLabel(
                 row,
                 text=status_text,
-                width=110,
-                font=("Segoe UI", 12),
+                width=140,
+                font=("Segoe UI", 11 if len(status_text) > 12 else 12),
                 text_color=status_col
             )
             status.pack(side="right", padx=(0, 10))
@@ -499,10 +498,15 @@ class FileList(ctk.CTkFrame):
 
         if target_row and hasattr(target_row, "status_label"):
             status_label = target_row.status_label
-            status_label.configure(text=text)
-            if "Converted" in text or "✅" in text:
+            status_label.configure(
+                text=text,
+                font=("Segoe UI", 11 if len(text) > 12 else 12)
+            )
+            if "Converted" in text or "Compressed" in text or "✅" in text:
                 status_label.configure(text_color="#4ade80")
             elif "Failed" in text or "❌" in text:
                 status_label.configure(text_color="#f87171")
             elif "Processing" in text:
                 status_label.configure(text_color="#60a5fa")
+            else:
+                status_label.configure(text_color="#a1a1aa")

@@ -142,6 +142,50 @@ class Sidebar(ctk.CTkFrame):
         self.quality_slider.set(80)
         self.quality_slider.pack(fill="x", padx=12, pady=2)
 
+        # Quick Compression Presets
+        presets_frame = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        presets_frame.pack(fill="x", padx=10, pady=(4, 6))
+        presets_frame.grid_columnconfigure(0, weight=1)
+        presets_frame.grid_columnconfigure(1, weight=1)
+        presets_frame.grid_columnconfigure(2, weight=1)
+
+        self.preset_max_btn = ctk.CTkButton(
+            presets_frame,
+            text="📉 40% Max",
+            height=26,
+            corner_radius=5,
+            fg_color="#27272a",
+            hover_color="#3f3f46",
+            font=("Segoe UI", 10, "bold"),
+            command=lambda: self.set_preset(40)
+        )
+        self.preset_max_btn.grid(row=0, column=0, padx=2, sticky="ew")
+
+        self.preset_bal_btn = ctk.CTkButton(
+            presets_frame,
+            text="⚖️ 75% Balanced",
+            height=26,
+            corner_radius=5,
+            fg_color="#27272a",
+            hover_color="#3f3f46",
+            font=("Segoe UI", 10, "bold"),
+            command=lambda: self.set_preset(75)
+        )
+        self.preset_bal_btn.grid(row=0, column=1, padx=2, sticky="ew")
+
+        self.preset_high_btn = ctk.CTkButton(
+            presets_frame,
+            text="✨ 90% Sharp",
+            height=26,
+            corner_radius=5,
+            fg_color="#27272a",
+            hover_color="#3f3f46",
+            font=("Segoe UI", 10, "bold"),
+            command=lambda: self.set_preset(90)
+        )
+        self.preset_high_btn.grid(row=0, column=2, padx=2, sticky="ew")
+
+        # Switches: Lossless & Auto-Compress
         self.lossless_switch = ctk.CTkSwitch(
             self.card_quality,
             text="Lossless WebP Mode",
@@ -150,7 +194,17 @@ class Sidebar(ctk.CTkFrame):
             text_color="#d4d4d8",
             progress_color="#2563eb"
         )
-        self.lossless_switch.pack(anchor="w", padx=12, pady=(6, 10))
+        self.lossless_switch.pack(anchor="w", padx=12, pady=(2, 4))
+
+        self.auto_compress_switch = ctk.CTkSwitch(
+            self.card_quality,
+            text="⚡ Auto-compress on change",
+            font=("Segoe UI", 11),
+            text_color="#d4d4d8",
+            progress_color="#059669"
+        )
+        self.auto_compress_switch.select()
+        self.auto_compress_switch.pack(anchor="w", padx=12, pady=(0, 8))
 
         # --------------------------------------------------
         # Card 3: Destination Folder
@@ -283,10 +337,21 @@ class Sidebar(ctk.CTkFrame):
     # Event Callbacks & Helpers
     # ==================================================
 
+    def set_preset(self, q_value):
+        if hasattr(self, "lossless_switch") and self.lossless_switch.get() == 1:
+            self.lossless_switch.deselect()
+            self.quality_slider.configure(state="normal")
+        self.quality_slider.set(q_value)
+        self.quality_label.configure(text=f"{int(q_value)}%", text_color="#60a5fa")
+        if hasattr(self.master, "on_compression_settings_changed"):
+            self.master.on_compression_settings_changed(immediate=True)
+
     def update_quality(self, value):
         if hasattr(self, "lossless_switch") and self.lossless_switch.get() == 1:
             return
         self.quality_label.configure(text=f"{int(value)}%")
+        if hasattr(self.master, "on_compression_settings_changed"):
+            self.master.on_compression_settings_changed(immediate=False)
 
     def toggle_lossless(self):
         if self.lossless_switch.get() == 1:
@@ -298,6 +363,8 @@ class Sidebar(ctk.CTkFrame):
                 text=f"{int(self.quality_slider.get())}%",
                 text_color="#60a5fa"
             )
+        if hasattr(self.master, "on_compression_settings_changed"):
+            self.master.on_compression_settings_changed(immediate=True)
 
     def set_output_folder(self, folder_path: str):
         self.output_entry.configure(state="normal")

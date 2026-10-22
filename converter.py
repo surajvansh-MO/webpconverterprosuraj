@@ -189,6 +189,30 @@ def load_image(image_path):
 # Image Conversion
 # =========================================================================
 
+def get_output_path(image_path, output_folder=None):
+    """
+    Get the destination file path for a converted image.
+    If the input image is already a WebP file and will be saved in the same directory,
+    appends '_compressed' to prevent overwriting the original file.
+    """
+    image_path = Path(image_path)
+    if output_folder:
+        folder = Path(output_folder)
+        folder.mkdir(parents=True, exist_ok=True)
+        candidate = folder / f"{image_path.stem}.webp"
+        try:
+            if candidate.resolve() == image_path.resolve():
+                return folder / f"{image_path.stem}_compressed.webp"
+        except Exception:
+            if str(candidate).lower() == str(image_path).lower():
+                return folder / f"{image_path.stem}_compressed.webp"
+        return candidate
+    else:
+        if image_path.suffix.lower() == ".webp":
+            return image_path.parent / f"{image_path.stem}_compressed.webp"
+        return image_path.with_suffix(".webp")
+
+
 def convert_image(image_path, output_folder=None, quality=80, lossless=False):
     """
     Convert a single image to WebP.
@@ -205,12 +229,7 @@ def convert_image(image_path, output_folder=None, quality=80, lossless=False):
 
         img = load_image(image_path)
 
-        if output_folder:
-            output_folder = Path(output_folder)
-            output_folder.mkdir(parents=True, exist_ok=True)
-            output_file = output_folder / f"{image_path.stem}.webp"
-        else:
-            output_file = image_path.with_suffix(".webp")
+        output_file = get_output_path(image_path, output_folder)
 
         save_kwargs = {
             "quality": int(quality),

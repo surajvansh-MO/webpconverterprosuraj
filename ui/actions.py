@@ -189,6 +189,44 @@ class AppActions:
             self.file_list.set_status("No output directory available")
 
     # ==================================================
+    # Compression Settings Change Event
+    # ==================================================
+
+    def on_compression_settings_changed(self, immediate=False):
+        if not self.selected_files:
+            return
+
+        auto_compress = (
+            hasattr(self.sidebar, "auto_compress_switch")
+            and self.sidebar.auto_compress_switch.get() == 1
+        )
+
+        quality = int(self.sidebar.quality_slider.get())
+        lossless = bool(hasattr(self.sidebar, "lossless_switch") and self.sidebar.lossless_switch.get() == 1)
+        q_desc = "Lossless" if lossless else f"{quality}% Quality"
+
+        for idx, f in enumerate(self.selected_files):
+            st = self.file_statuses.get(f, "")
+            if "Processing" not in st:
+                self.file_statuses[f] = "Ready"
+                self.file_list.update_row(idx, "Ready")
+
+        self.sidebar.convert_btn.configure(state="normal")
+
+        if not auto_compress:
+            self.file_list.set_status(f"Settings updated to {q_desc} • Click 'Start Conversion'")
+            return
+
+        if hasattr(self, "_auto_compress_job") and self._auto_compress_job:
+            try:
+                self.after_cancel(self._auto_compress_job)
+            except Exception:
+                pass
+
+        delay = 0 if immediate else 450
+        self._auto_compress_job = self.after(delay, self.start_conversion)
+
+    # ==================================================
     # Convert Single File
     # ==================================================
 
@@ -204,6 +242,8 @@ class AppActions:
         self.file_statuses[file_path] = "Processing..."
 
         def do_convert():
+            orig_size = file_path.stat().st_size if file_path.exists() else 0
+
             result, message = convert_image(
                 file_path,
                 output_folder=self.output_folder,
@@ -211,7 +251,17 @@ class AppActions:
                 lossless=lossless
             )
 
-            status_text = "Converted ✅" if result else "Failed ❌"
+            if result:
+                out_path = Path(message)
+                new_size = out_path.stat().st_size if out_path.exists() else 0
+                if orig_size > 0 and new_size > 0 and new_size < orig_size:
+                    reduction = (1 - new_size / orig_size) * 100
+                    status_text = f"Compressed ✅ (-{int(reduction)}%)"
+                else:
+                    status_text = "Compressed ✅" if file_path.suffix.lower() == ".webp" else "Converted ✅"
+            else:
+                status_text = "Failed ❌"
+
             self.file_statuses[file_path] = status_text
 
             def update_ui():
@@ -261,16 +311,11 @@ class AppActions:
 
             file_path = Path(file)
 
-            # Skip if this file is already converted successfully
-            if self.file_statuses.get(file_path) == "Converted ✅":
-                success += 1
-                prog = (index + 1) / total
-                self.after(0, lambda p=prog: self.file_list.set_progress(p))
-                continue
-
             self.file_statuses[file_path] = "Processing..."
             curr_idx = index
             self.after(0, lambda idx=curr_idx: self.file_list.update_row(idx, "Processing..."))
+
+            orig_size = file_path.stat().st_size if file_path.exists() else 0
 
             result, message = convert_image(
                 file_path,
@@ -281,7 +326,13 @@ class AppActions:
 
             if result:
                 success += 1
-                status_text = "Converted ✅"
+                out_path = Path(message)
+                new_size = out_path.stat().st_size if out_path.exists() else 0
+                if orig_size > 0 and new_size > 0 and new_size < orig_size:
+                    reduction = (1 - new_size / orig_size) * 100
+                    status_text = f"Compressed ✅ (-{int(reduction)}%)"
+                else:
+                    status_text = "Compressed ✅" if file_path.suffix.lower() == ".webp" else "Converted ✅"
             else:
                 status_text = "Failed ❌"
 
@@ -293,7 +344,7 @@ class AppActions:
             def update_step(idx=curr_idx, st=curr_status, p=prog, i=curr_idx + 1):
                 self.file_list.update_row(idx, st)
                 self.file_list.set_progress(p)
-                self.file_list.set_status(f"Converting {i} of {total}")
+                self.file_list.set_status(f"Processed {i} of {total} ({st})")
 
             self.after(0, update_step)
 
@@ -301,7 +352,8 @@ class AppActions:
 
         def update_complete():
             self.file_list.set_progress(1)
-            self.file_list.set_status(f"Completed • {final_success}/{total} converted")
+            q_desc = "Lossless" if lossless else f"{quality}% Quality"
+            self.file_list.set_status(f"Completed ({q_desc}) • {final_success}/{total} ready")
             self.sidebar.open_output_btn.configure(state="normal")
             self.sidebar.convert_btn.configure(state="normal")
 
