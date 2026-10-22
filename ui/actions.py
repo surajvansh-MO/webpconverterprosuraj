@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from tkinter import filedialog
 
+import theme
 from converter import convert_image
 
 
@@ -59,12 +60,12 @@ class AppActions:
             self.file_list.populate(self.selected_files, self.file_statuses, self.output_folder)
 
             self.file_list.set_status(
-                f"{len(self.selected_files)} file(s) selected"
+                f"{len(self.selected_files)} files selected"
             )
 
-            self.sidebar.convert_btn.configure(
-                state="normal"
-            )
+            self.sidebar.set_convert_button_state("enabled")
+            if hasattr(self, "update_settings_indicator"):
+                self.update_settings_indicator()
 
     # ==================================================
     # Drag & Drop Event Handler
@@ -193,6 +194,9 @@ class AppActions:
     # ==================================================
 
     def on_compression_settings_changed(self, immediate=False):
+        if hasattr(self, "update_settings_indicator"):
+            self.update_settings_indicator()
+
         if not self.selected_files:
             return
 
@@ -207,14 +211,14 @@ class AppActions:
 
         for idx, f in enumerate(self.selected_files):
             st = self.file_statuses.get(f, "")
-            if "Processing" not in st:
-                self.file_statuses[f] = "Ready"
-                self.file_list.update_row(idx, "Ready")
+            if "Converting" not in st and "Processing" not in st:
+                self.file_statuses[f] = "Waiting"
+                self.file_list.update_row(idx, "Waiting")
 
-        self.sidebar.convert_btn.configure(state="normal")
+        self.sidebar.set_convert_button_state("enabled")
 
         if not auto_compress:
-            self.file_list.set_status(f"Settings updated to {q_desc} • Click 'Start Conversion'")
+            self.file_list.set_status(f"Settings updated ({q_desc})")
             return
 
         if hasattr(self, "_auto_compress_job") and self._auto_compress_job:
@@ -238,8 +242,8 @@ class AppActions:
         quality = int(self.sidebar.quality_slider.get())
         lossless = bool(hasattr(self.sidebar, "lossless_switch") and self.sidebar.lossless_switch.get() == 1)
 
-        self.file_list.update_row(index, "Processing...")
-        self.file_statuses[file_path] = "Processing..."
+        self.file_list.update_row(index, "Converting…", percent=50)
+        self.file_statuses[file_path] = "Converting…"
 
         def do_convert():
             orig_size = file_path.stat().st_size if file_path.exists() else 0
@@ -255,21 +259,27 @@ class AppActions:
                 out_path = Path(message)
                 new_size = out_path.stat().st_size if out_path.exists() else 0
                 if orig_size > 0 and new_size > 0 and new_size < orig_size:
-                    reduction = (1 - new_size / orig_size) * 100
-                    status_text = f"Compressed ✅ (-{int(reduction)}%)"
-                else:
-                    status_text = "Compressed ✅" if file_path.suffix.lower() == ".webp" else "Converted ✅"
+                    saved = orig_size - new_size
+                    self.total_saved_bytes = getattr(self, "total_saved_bytes", 0) + saved
+                    saved_total = self.total_saved_bytes
+                    self.after(0, lambda s=saved_total: self.file_list.update_saved_chip(s))
+
+                self.file_statuses[file_path] = "Done"
+
+                def update_done():
+                    self.file_list.update_row(index, "Done", orig_size=orig_size, new_size=new_size)
+                    self.sidebar.open_output_btn.configure(state="normal", text_color=theme.TEXT_PRIMARY)
+                    self.file_list.set_status(f"{file_path.name} converted")
+
+                self.after(0, update_done)
             else:
-                status_text = "Failed ❌"
+                self.file_statuses[file_path] = "Failed"
 
-            self.file_statuses[file_path] = status_text
+                def update_fail():
+                    self.file_list.update_row(index, "Failed")
+                    self.file_list.set_status(f"{file_path.name} conversion failed")
 
-            def update_ui():
-                self.file_list.update_row(index, status_text)
-                self.sidebar.open_output_btn.configure(state="normal")
-                self.file_list.set_status(f"{file_path.name}: {status_text}")
-
-            self.after(0, update_ui)
+                self.after(0, update_fail)
 
         threading.Thread(target=do_convert, daemon=True).start()
 
@@ -281,10 +291,6 @@ class AppActions:
 
         if not self.selected_files:
             return
-
-        self.sidebar.convert_btn.configure(
-            state="disabled"
-        )
 
         self.file_list.set_progress(0)
 
@@ -307,13 +313,28 @@ class AppActions:
         quality = int(self.sidebar.quality_slider.get())
         lossless = bool(hasattr(self.sidebar, "lossless_switch") and self.sidebar.lossless_switch.get() == 1)
 
+        # Set Start button to converting busy state
+        self.after(0, lambda: self.sidebar.set_convert_button_state("converting", text=f"Converting 1 / {total}"))
+
+        # Mark all pending files as Queued
+        for i in range(1, total):
+            fp = self.selected_files[i]
+            if self.file_statuses.get(fp) not in ("Done", "Converted ✅", "Compressed ✅"):
+                self.file_statuses[fp] = "Queued"
+                self.after(0, lambda idx=i: self.file_list.update_row(idx, "Queued"))
+
         for index, file in enumerate(self.selected_files):
 
             file_path = Path(file)
 
-            self.file_statuses[file_path] = "Processing..."
-            curr_idx = index
-            self.after(0, lambda idx=curr_idx: self.file_list.update_row(idx, "Processing..."))
+            # Mark current file converting
+            curr_i = index
+            curr_pct = int(index / total * 100)
+            self.file_statuses[file_path] = "Converting…"
+
+            self.after(0, lambda idx=curr_i, p=curr_pct: self.file_list.update_row(idx, "Converting…", percent=p))
+            self.after(0, lambda i=index + 1: self.sidebar.set_convert_button_state("converting", text=f"Converting {i} / {total}"))
+            self.after(0, lambda i=index + 1, p=curr_pct: self.file_list.set_status(f"Converting {i} of {total} · {p}%"))
 
             orig_size = file_path.stat().st_size if file_path.exists() else 0
 
@@ -329,33 +350,32 @@ class AppActions:
                 out_path = Path(message)
                 new_size = out_path.stat().st_size if out_path.exists() else 0
                 if orig_size > 0 and new_size > 0 and new_size < orig_size:
-                    reduction = (1 - new_size / orig_size) * 100
-                    status_text = f"Compressed ✅ (-{int(reduction)}%)"
-                else:
-                    status_text = "Compressed ✅" if file_path.suffix.lower() == ".webp" else "Converted ✅"
+                    saved = orig_size - new_size
+                    self.total_saved_bytes = getattr(self, "total_saved_bytes", 0) + saved
+                    saved_total = self.total_saved_bytes
+                    self.after(0, lambda s=saved_total: self.file_list.update_saved_chip(s))
+
+                self.file_statuses[file_path] = "Done"
+                self.after(0, lambda idx=curr_i, o=orig_size, n=new_size: self.file_list.update_row(idx, "Done", orig_size=o, new_size=n))
             else:
-                status_text = "Failed ❌"
+                self.file_statuses[file_path] = "Failed"
+                self.after(0, lambda idx=curr_i: self.file_list.update_row(idx, "Failed"))
 
-            self.file_statuses[file_path] = status_text
             prog = (index + 1) / total
-            curr_success = success
-            curr_status = status_text
-
-            def update_step(idx=curr_idx, st=curr_status, p=prog, i=curr_idx + 1):
-                self.file_list.update_row(idx, st)
-                self.file_list.set_progress(p)
-                self.file_list.set_status(f"Processed {i} of {total} ({st})")
-
-            self.after(0, update_step)
+            curr_prog_pct = int(prog * 100)
+            self.after(0, lambda p=prog, i=index + 1, pct=curr_prog_pct: (
+                self.file_list.set_progress(p),
+                self.file_list.set_status(f"Converting {i} of {total} · {pct}%")
+            ))
 
         final_success = success
 
         def update_complete():
             self.file_list.set_progress(1)
             q_desc = "Lossless" if lossless else f"{quality}% Quality"
-            self.file_list.set_status(f"Completed ({q_desc}) • {final_success}/{total} ready")
-            self.sidebar.open_output_btn.configure(state="normal")
-            self.sidebar.convert_btn.configure(state="normal")
+            self.file_list.set_status(f"Completed ({q_desc}) · {final_success}/{total} ready")
+            self.sidebar.open_output_btn.configure(state="normal", text_color=theme.TEXT_PRIMARY)
+            self.sidebar.set_convert_button_state("enabled")
 
         self.after(0, update_complete)
 
@@ -367,6 +387,7 @@ class AppActions:
 
         self.selected_files.clear()
         self.file_statuses.clear()
+        self.total_saved_bytes = 0
 
         self.output_folder = None
 
@@ -374,12 +395,11 @@ class AppActions:
 
         self.sidebar.clear_output_folder()
 
-        self.sidebar.convert_btn.configure(
-            state="disabled"
-        )
+        self.sidebar.set_convert_button_state("disabled")
 
         self.sidebar.open_output_btn.configure(
-            state="disabled"
+            state="disabled",
+            text_color=theme.TEXT_MUTED
         )
 
         self.file_list.set_status(
@@ -414,7 +434,7 @@ class AppActions:
                 self.file_list.remove_single_row(removed, self.selected_files)
 
                 self.file_list.set_status(
-                    f"{len(self.selected_files)} file(s) selected"
+                    f"{len(self.selected_files)} files selected"
                 )
 
             else:

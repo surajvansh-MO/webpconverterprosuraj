@@ -1,6 +1,7 @@
-# pyrefly: ignore [missing-import]
 import customtkinter as ctk
-from PIL import Image
+from pathlib import Path
+import theme
+from ui.icons import get_icon
 
 
 class Sidebar(ctk.CTkFrame):
@@ -8,361 +9,597 @@ class Sidebar(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(
             master,
-            width=280,
+            width=theme.SIDEBAR_WIDTH,
             corner_radius=0,
-            fg_color="#18181b"  # Deep modern slate background
+            fg_color=theme.BG_SIDEBAR,
+            border_width=0
         )
 
         self.grid_propagate(False)
         self.pack_propagate(False)
 
-        # ==================================================
-        # Header Bar (Clean Section Title)
-        # ==================================================
+        # Main vertical container with consistent 18px padding
+        self.container = ctk.CTkFrame(self, fg_color="transparent")
+        self.container.pack(fill="both", expand=True, padx=theme.SIDEBAR_PAD, pady=(16, 12))
 
-        self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.header_frame.pack(fill="x", padx=14, pady=(16, 6))
+        # Bottom section pinned to the bottom
+        self.bottom_box = ctk.CTkFrame(self.container, fg_color="transparent")
+        self.bottom_box.pack(side="bottom", fill="x")
 
-        self.title_label = ctk.CTkLabel(
-            self.header_frame,
-            text="⚡ Conversion Panel",
-            font=("Segoe UI", 14, "bold"),
-            text_color="#f4f4f5",
-            anchor="w"
+        # Top section expanding from the top
+        self.top_box = ctk.CTkFrame(self.container, fg_color="transparent")
+        self.top_box.pack(side="top", fill="both", expand=True)
+
+        # 1. Brand Header
+        self._build_brand_header(self.top_box)
+
+        # 2. Card: ADD SOURCE IMAGES
+        self._build_source_card(self.top_box)
+
+        # 3. Card: QUALITY & SETTINGS
+        self._build_quality_card(self.top_box)
+
+        # 4. Card: DESTINATION FOLDER
+        self._build_destination_card(self.top_box)
+
+        # 5. Bottom Action Buttons (Start Conversion + Clear All)
+        self._build_action_buttons(self.bottom_box)
+
+        # 6. Footer (Avatar + Developed by + Email)
+        self._build_footer(self.bottom_box)
+
+    # ==================================================
+    # 1. Brand Header
+    # ==================================================
+    def _build_brand_header(self, parent):
+        brand_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        brand_frame.pack(fill="x", pady=(0, 12))
+
+        # 38x38 rounded orange square with dark bolt icon
+        badge = ctk.CTkFrame(
+            brand_frame,
+            width=38,
+            height=38,
+            corner_radius=10,
+            fg_color=theme.ACCENT,
+            border_width=0
         )
-        self.title_label.pack(fill="x")
-
-        self.subtitle = ctk.CTkLabel(
-            self.header_frame,
-            text="High-Performance Batch Engine",
-            font=("Segoe UI", 11),
-            text_color="#a1a1aa",
-            anchor="w"
-        )
-        self.subtitle.pack(fill="x", pady=(1, 0))
-
-        # Divider Line
-        self.divider = ctk.CTkFrame(self, height=1, fg_color="#27272a")
-        self.divider.pack(fill="x", padx=14, pady=(6, 8))
-
-        # ==================================================
-        # Single-Sight Main Content Container (No Scrollbar)
-        # ==================================================
-
-        self.content_container = ctk.CTkFrame(self, fg_color="transparent")
-        self.content_container.pack(fill="both", expand=True, padx=12, pady=0)
-
-        # --------------------------------------------------
-        # Card 1: Add Source Images
-        # --------------------------------------------------
-
-        self.card_source = ctk.CTkFrame(
-            self.content_container,
-            fg_color="#202023",
-            border_width=1,
-            border_color="#2c2c30",
-            corner_radius=10
-        )
-        self.card_source.pack(fill="x", pady=(0, 8))
+        badge.pack(side="left", padx=(0, 12))
+        badge.pack_propagate(False)
 
         ctk.CTkLabel(
-            self.card_source,
-            text="📥 Add Source Images",
-            font=("Segoe UI", 12, "bold"),
-            text_color="#f4f4f5"
-        ).pack(anchor="w", padx=12, pady=(8, 6))
+            badge,
+            image=get_icon("bolt_dark", size=(18, 18)),
+            text=""
+        ).pack(expand=True)
 
-        btns_frame = ctk.CTkFrame(self.card_source, fg_color="transparent")
-        btns_frame.pack(fill="x", padx=10, pady=(0, 10))
-        btns_frame.grid_columnconfigure(0, weight=1)
-        btns_frame.grid_columnconfigure(1, weight=1)
+        text_col = ctk.CTkFrame(brand_frame, fg_color="transparent")
+        text_col.pack(side="left", fill="both", expand=True)
+
+        ctk.CTkLabel(
+            text_col,
+            text="Conversion Panel",
+            font=theme.FONT_APP_TITLE,
+            text_color=theme.TEXT_PRIMARY,
+            anchor="w"
+        ).pack(fill="x")
+
+        ctk.CTkLabel(
+            text_col,
+            text="High-Performance Batch Engine",
+            font=theme.FONT_APP_SUBTITLE,
+            text_color=theme.TEXT_MUTED,
+            anchor="w"
+        ).pack(fill="x", pady=(1, 0))
+
+    # ==================================================
+    # 2. Card: ADD SOURCE IMAGES
+    # ==================================================
+    def _build_source_card(self, parent):
+        card = ctk.CTkFrame(
+            parent,
+            fg_color=theme.BG_SURFACE,
+            border_width=1,
+            border_color=theme.BORDER_LINE,
+            corner_radius=theme.RADIUS_CARD
+        )
+        card.pack(fill="x", pady=(0, 8))
+
+        # Header with icon
+        hdr = ctk.CTkFrame(card, fg_color="transparent")
+        hdr.pack(fill="x", padx=14, pady=(8, 6))
+
+        ctk.CTkLabel(
+            hdr,
+            image=get_icon("image_plus_dim", size=(14, 14)),
+            text=""
+        ).pack(side="left", padx=(0, 8))
+
+        ctk.CTkLabel(
+            hdr,
+            text="ADD SOURCE IMAGES",
+            font=theme.FONT_CARD_TITLE,
+            text_color=theme.TEXT_DIM,
+            anchor="w"
+        ).pack(side="left")
+
+        # Two equal buttons
+        btns = ctk.CTkFrame(card, fg_color="transparent")
+        btns.pack(fill="x", padx=12, pady=(0, 8))
+        btns.grid_columnconfigure(0, weight=1)
+        btns.grid_columnconfigure(1, weight=1)
 
         self.browse_images_btn = ctk.CTkButton(
-            btns_frame,
-            text="📂 Files",
+            btns,
+            text=" Files",
+            image=get_icon("files_dark", size=(16, 16)),
+            compound="left",
             height=34,
-            corner_radius=6,
-            fg_color="#2563eb",
-            hover_color="#1d4ed8",
-            font=("Segoe UI", 12, "bold")
+            corner_radius=theme.RADIUS_BUTTON,
+            fg_color=theme.ACCENT,
+            hover_color=theme.ACCENT_HOVER,
+            text_color=theme.TEXT_ON_ACCENT,
+            font=theme.FONT_BUTTON
         )
         self.browse_images_btn.grid(row=0, column=0, padx=(0, 4), sticky="ew")
 
         self.browse_folder_btn = ctk.CTkButton(
-            btns_frame,
-            text="📁 Folder",
+            btns,
+            text=" Folder",
+            image=get_icon("folder_primary", size=(16, 16)),
+            compound="left",
             height=34,
-            corner_radius=6,
-            fg_color="#3b82f6",
-            hover_color="#2563eb",
-            font=("Segoe UI", 12, "bold")
+            corner_radius=theme.RADIUS_BUTTON,
+            fg_color=theme.BG_SURFACE,
+            hover_color=theme.BG_SURFACE_2,
+            border_width=1,
+            border_color=theme.BORDER_LINE_STRONG,
+            text_color=theme.TEXT_PRIMARY,
+            font=theme.FONT_BUTTON
         )
         self.browse_folder_btn.grid(row=0, column=1, padx=(4, 0), sticky="ew")
 
-        # --------------------------------------------------
-        # Card 2: Quality & Compression Settings
-        # --------------------------------------------------
-
+    # ==================================================
+    # 3. Card: QUALITY & SETTINGS
+    # ==================================================
+    def _build_quality_card(self, parent):
         self.card_quality = ctk.CTkFrame(
-            self.content_container,
-            fg_color="#202023",
+            parent,
+            fg_color=theme.BG_SURFACE,
             border_width=1,
-            border_color="#2c2c30",
-            corner_radius=10
+            border_color=theme.BORDER_LINE,
+            corner_radius=theme.RADIUS_CARD
         )
-        self.card_quality.pack(fill="x", pady=(0, 8))
+        self.card_quality.pack(fill="x", pady=(0, 10))
 
-        q_header = ctk.CTkFrame(self.card_quality, fg_color="transparent")
-        q_header.pack(fill="x", padx=12, pady=(8, 4))
+        # Header Row
+        hdr = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        hdr.pack(fill="x", padx=14, pady=(10, 8))
 
         ctk.CTkLabel(
-            q_header,
-            text="⚙️ Quality & Settings",
-            font=("Segoe UI", 12, "bold"),
-            text_color="#f4f4f5"
+            hdr,
+            image=get_icon("sliders_dim", size=(14, 14)),
+            text=""
+        ).pack(side="left", padx=(0, 8))
+
+        ctk.CTkLabel(
+            hdr,
+            text="QUALITY & SETTINGS",
+            font=theme.FONT_CARD_TITLE,
+            text_color=theme.TEXT_DIM,
+            anchor="w"
         ).pack(side="left")
 
-        self.quality_label = ctk.CTkLabel(
-            q_header,
-            text="80%",
-            font=("Segoe UI", 12, "bold"),
-            text_color="#60a5fa"
+        # Pill badge on right ("80%")
+        self.quality_badge_frame = ctk.CTkFrame(
+            hdr,
+            fg_color=theme.ACCENT_SOFT_FILL,
+            border_width=1,
+            border_color=theme.ACCENT_BORDER,
+            corner_radius=theme.RADIUS_PILL
         )
-        self.quality_label.pack(side="right")
+        self.quality_badge_frame.pack(side="right")
+
+        self.quality_label = ctk.CTkLabel(
+            self.quality_badge_frame,
+            text="80%",
+            font=theme.FONT_VALUE_PILL,
+            text_color=theme.ACCENT_TEXT
+        )
+        self.quality_label.pack(padx=10, pady=2)
+
+        # Slider Row
+        slider_frame = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        slider_frame.pack(fill="x", padx=12, pady=(0, 2))
 
         self.quality_slider = ctk.CTkSlider(
-            self.card_quality,
+            slider_frame,
             from_=1,
             to=100,
-            button_color="#3b82f6",
-            button_hover_color="#60a5fa",
-            progress_color="#2563eb",
+            height=14,
+            progress_color=theme.ACCENT,
+            fg_color=theme.BORDER_LINE,
+            button_color="#FFFFFF",
+            button_hover_color="#FFFFFF",
+            button_corner_radius=7,
             command=self.update_quality
         )
         self.quality_slider.set(80)
-        self.quality_slider.pack(fill="x", padx=12, pady=2)
+        self.quality_slider.pack(fill="x")
 
-        # Quick Compression Presets
-        presets_frame = ctk.CTkFrame(self.card_quality, fg_color="transparent")
-        presets_frame.pack(fill="x", padx=10, pady=(4, 6))
-        presets_frame.grid_columnconfigure(0, weight=1)
-        presets_frame.grid_columnconfigure(1, weight=1)
-        presets_frame.grid_columnconfigure(2, weight=1)
-
-        self.preset_max_btn = ctk.CTkButton(
-            presets_frame,
-            text="📉 40% Max",
-            height=26,
-            corner_radius=5,
-            fg_color="#27272a",
-            hover_color="#3f3f46",
-            font=("Segoe UI", 10, "bold"),
-            command=lambda: self.set_preset(40)
-        )
-        self.preset_max_btn.grid(row=0, column=0, padx=2, sticky="ew")
-
-        self.preset_bal_btn = ctk.CTkButton(
-            presets_frame,
-            text="⚖️ 75% Balanced",
-            height=26,
-            corner_radius=5,
-            fg_color="#27272a",
-            hover_color="#3f3f46",
-            font=("Segoe UI", 10, "bold"),
-            command=lambda: self.set_preset(75)
-        )
-        self.preset_bal_btn.grid(row=0, column=1, padx=2, sticky="ew")
-
-        self.preset_high_btn = ctk.CTkButton(
-            presets_frame,
-            text="✨ 90% Sharp",
-            height=26,
-            corner_radius=5,
-            fg_color="#27272a",
-            hover_color="#3f3f46",
-            font=("Segoe UI", 10, "bold"),
-            command=lambda: self.set_preset(90)
-        )
-        self.preset_high_btn.grid(row=0, column=2, padx=2, sticky="ew")
-
-        # Switches: Lossless & Auto-Compress
-        self.lossless_switch = ctk.CTkSwitch(
-            self.card_quality,
-            text="Lossless WebP Mode",
-            command=self.toggle_lossless,
-            font=("Segoe UI", 11),
-            text_color="#d4d4d8",
-            progress_color="#2563eb"
-        )
-        self.lossless_switch.pack(anchor="w", padx=12, pady=(2, 4))
-
-        self.auto_compress_switch = ctk.CTkSwitch(
-            self.card_quality,
-            text="⚡ Auto-compress on change",
-            font=("Segoe UI", 11),
-            text_color="#d4d4d8",
-            progress_color="#059669"
-        )
-        self.auto_compress_switch.select()
-        self.auto_compress_switch.pack(anchor="w", padx=12, pady=(0, 8))
-
-        # --------------------------------------------------
-        # Card 3: Destination Folder
-        # --------------------------------------------------
-
-        self.card_output = ctk.CTkFrame(
-            self.content_container,
-            fg_color="#202023",
-            border_width=1,
-            border_color="#2c2c30",
-            corner_radius=10
-        )
-        self.card_output.pack(fill="x", pady=(0, 8))
+        # Sub labels under slider ("Smaller file", "Higher quality")
+        sub_labels = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        sub_labels.pack(fill="x", padx=14, pady=(2, 6))
 
         ctk.CTkLabel(
-            self.card_output,
-            text="📁 Destination Folder",
-            font=("Segoe UI", 12, "bold"),
-            text_color="#f4f4f5"
-        ).pack(anchor="w", padx=12, pady=(8, 4))
+            sub_labels,
+            text="Smaller file",
+            font=theme.FONT_DIM,
+            text_color=theme.TEXT_DIM
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            sub_labels,
+            text="Higher quality",
+            font=theme.FONT_DIM,
+            text_color=theme.TEXT_DIM
+        ).pack(side="right")
+
+        # Preset Chips Row (3 equal chips: 40% Max, 75% Balance, 90% Sharp)
+        presets_frame = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        presets_frame.pack(fill="x", padx=12, pady=(0, 10))
+        presets_frame.grid_columnconfigure((0, 1, 2), weight=1)
+
+        self.preset_chips = {}
+        for idx, (q, label) in enumerate([(40, "Max"), (75, "Balance"), (90, "Sharp")]):
+            btn = ctk.CTkButton(
+                presets_frame,
+                text=f"{q}%\n{label}",
+                height=36,
+                corner_radius=theme.RADIUS_CHIP,
+                fg_color=theme.BG_SURFACE,
+                hover_color=theme.BG_SURFACE_2,
+                border_width=1,
+                border_color=theme.BORDER_LINE,
+                text_color=theme.TEXT_PRIMARY,
+                font=theme.FONT_PRESET_LABEL,
+                command=lambda val=q: self.set_preset(val)
+            )
+            btn.grid(row=0, column=idx, padx=3, sticky="ew")
+            self.preset_chips[q] = btn
+
+        # Divider line
+        div1 = ctk.CTkFrame(self.card_quality, height=1, fg_color=theme.BORDER_LINE)
+        div1.pack(fill="x", padx=14, pady=0)
+
+        # Toggle Row 1: Lossless WebP Mode
+        lossless_row = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        lossless_row.pack(fill="x", padx=14, pady=(8, 8))
+
+        ctk.CTkLabel(
+            lossless_row,
+            text="Lossless WebP Mode",
+            font=theme.FONT_TOGGLE_LABEL,
+            text_color=theme.TEXT_PRIMARY
+        ).pack(side="left")
+
+        self.lossless_switch = ctk.CTkSwitch(
+            lossless_row,
+            text="",
+            width=44,
+            command=self.toggle_lossless,
+            progress_color=theme.ACCENT,
+            fg_color=theme.BG_SURFACE_2,
+            button_color="#FFFFFF",
+            button_hover_color="#FFFFFF"
+        )
+        self.lossless_switch.pack(side="right")
+
+        # Divider line
+        div2 = ctk.CTkFrame(self.card_quality, height=1, fg_color=theme.BORDER_LINE)
+        div2.pack(fill="x", padx=14, pady=0)
+
+        # Toggle Row 2: Auto-compress on change
+        auto_row = ctk.CTkFrame(self.card_quality, fg_color="transparent")
+        auto_row.pack(fill="x", padx=14, pady=(8, 8))
+
+        auto_texts = ctk.CTkFrame(auto_row, fg_color="transparent")
+        auto_texts.pack(side="left")
+
+        ctk.CTkLabel(
+            auto_texts,
+            text="Auto-compress on change",
+            font=theme.FONT_TOGGLE_LABEL,
+            text_color=theme.TEXT_PRIMARY,
+            anchor="w"
+        ).pack(fill="x")
+
+        ctk.CTkLabel(
+            auto_texts,
+            text="Re-run when settings change",
+            font=theme.FONT_TOGGLE_HELPER,
+            text_color=theme.TEXT_DIM,
+            anchor="w"
+        ).pack(fill="x")
+
+        self.auto_compress_switch = ctk.CTkSwitch(
+            auto_row,
+            text="",
+            width=44,
+            progress_color=theme.ACCENT,
+            fg_color=theme.BG_SURFACE_2,
+            button_color="#FFFFFF",
+            button_hover_color="#FFFFFF"
+        )
+        self.auto_compress_switch.select()
+        self.auto_compress_switch.pack(side="right")
+
+    # ==================================================
+    # 4. Card: DESTINATION FOLDER
+    # ==================================================
+    def _build_destination_card(self, parent):
+        card = ctk.CTkFrame(
+            parent,
+            fg_color=theme.BG_SURFACE,
+            border_width=1,
+            border_color=theme.BORDER_LINE,
+            corner_radius=theme.RADIUS_CARD
+        )
+        card.pack(fill="x", pady=(0, 8))
+
+        hdr = ctk.CTkFrame(card, fg_color="transparent")
+        hdr.pack(fill="x", padx=14, pady=(8, 6))
+
+        ctk.CTkLabel(
+            hdr,
+            image=get_icon("folder_dim", size=(14, 14)),
+            text=""
+        ).pack(side="left", padx=(0, 8))
+
+        ctk.CTkLabel(
+            hdr,
+            text="DESTINATION FOLDER",
+            font=theme.FONT_CARD_TITLE,
+            text_color=theme.TEXT_DIM,
+            anchor="w"
+        ).pack(side="left")
 
         self.output_entry = ctk.CTkEntry(
-            self.card_output,
-            placeholder_text="Same folder as source",
+            card,
+            placeholder_text="No folder selected",
+            placeholder_text_color=theme.TEXT_DIM,
             state="readonly",
             height=30,
-            corner_radius=6,
-            font=("Segoe UI", 11),
-            fg_color="#18181b",
-            border_color="#3f3f46"
+            corner_radius=theme.RADIUS_INPUT,
+            font=theme.FONT_HELPER,
+            fg_color=theme.BG_SURFACE,
+            border_color=theme.BORDER_LINE,
+            border_width=1,
+            text_color=theme.TEXT_PRIMARY
         )
         self.output_entry.pack(fill="x", padx=12, pady=(0, 6))
 
-        out_btns = ctk.CTkFrame(self.card_output, fg_color="transparent")
-        out_btns.pack(fill="x", padx=10, pady=(0, 8))
-        out_btns.grid_columnconfigure(0, weight=1)
-        out_btns.grid_columnconfigure(1, weight=1)
+        out_btns = ctk.CTkFrame(card, fg_color="transparent")
+        out_btns.pack(fill="x", padx=12, pady=(0, 8))
+        out_btns.grid_columnconfigure((0, 1), weight=1)
 
         self.output_button = ctk.CTkButton(
             out_btns,
             text="Choose",
             height=30,
-            corner_radius=6,
-            fg_color="#3f3f46",
-            hover_color="#52525b",
-            font=("Segoe UI", 11)
+            corner_radius=theme.RADIUS_BUTTON,
+            fg_color=theme.BG_SURFACE,
+            hover_color=theme.BG_SURFACE_2,
+            border_width=1,
+            border_color=theme.BORDER_LINE,
+            text_color=theme.TEXT_PRIMARY,
+            font=theme.FONT_BUTTON
         )
-        self.output_button.grid(row=0, column=0, padx=(0, 3), sticky="ew")
+        self.output_button.grid(row=0, column=0, padx=(0, 4), sticky="ew")
 
         self.open_output_btn = ctk.CTkButton(
             out_btns,
-            text="Open Folder",
+            text=" Open Folder",
+            image=get_icon("folder_open_muted", size=(15, 15)),
+            compound="left",
             height=30,
-            corner_radius=6,
-            fg_color="#27272a",
-            hover_color="#3f3f46",
-            text_color="#a1a1aa",
-            state="disabled",
-            font=("Segoe UI", 11)
-        )
-        self.open_output_btn.grid(row=0, column=1, padx=(3, 0), sticky="ew")
-
-        # ==================================================
-        # Footer Action Area (Fixed at bottom)
-        # ==================================================
-
-        self.footer_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.footer_frame.pack(fill="x", padx=12, pady=(6, 12), side="bottom")
-
-        self.clear_btn = ctk.CTkButton(
-            self.footer_frame,
-            text="🗑️ Clear All",
-            height=32,
-            corner_radius=6,
-            fg_color="#dc2626",
-            hover_color="#b91c1c",
-            font=("Segoe UI", 11, "bold")
-        )
-        self.clear_btn.pack(fill="x", pady=(0, 6))
-
-        self.convert_btn = ctk.CTkButton(
-            self.footer_frame,
-            text="🚀 Start Conversion",
-            height=42,
-            corner_radius=8,
-            state="disabled",
-            fg_color="#059669",
-            hover_color="#047857",
-            font=("Segoe UI", 14, "bold")
-        )
-        self.convert_btn.pack(fill="x")
-
-        # Developer Branding Footer Card
-        self.brand_footer = ctk.CTkFrame(
-            self.footer_frame,
-            fg_color="#1e1e24",
-            corner_radius=8,
+            corner_radius=theme.RADIUS_BUTTON,
+            fg_color=theme.BG_SURFACE,
+            hover_color=theme.BG_SURFACE_2,
             border_width=1,
-            border_color="#2d2d35"
+            border_color=theme.BORDER_LINE,
+            text_color=theme.TEXT_MUTED,
+            state="disabled",
+            font=theme.FONT_BUTTON
         )
-        self.brand_footer.pack(fill="x", pady=(8, 0))
+        self.open_output_btn.grid(row=0, column=1, padx=(4, 0), sticky="ew")
 
-        # 1. Developed by Suraj Kumar
-        dev_frame = ctk.CTkFrame(self.brand_footer, fg_color="transparent")
-        dev_frame.pack(pady=(12, 4))
+    # ==================================================
+    # 5. Bottom Action Buttons (Start Conversion + Clear All)
+    # ==================================================
+    def _build_action_buttons(self, parent):
+        actions_frame = ctk.CTkFrame(parent, fg_color="transparent")
+        actions_frame.pack(fill="x", pady=(0, 8))
+
+        # Start Conversion Button (46px tall, radius 12)
+        self.convert_btn = ctk.CTkButton(
+            actions_frame,
+            text=" Start Conversion",
+            image=get_icon("play_dim", size=(16, 16)),
+            compound="left",
+            height=44,
+            corner_radius=theme.RADIUS_BUTTON_PRIMARY,
+            state="disabled",
+            fg_color=theme.BG_SURFACE,
+            hover_color=theme.ACCENT_HOVER,
+            border_width=1,
+            border_color=theme.BORDER_LINE,
+            text_color=theme.TEXT_DIM,
+            font=theme.FONT_BUTTON_PRIMARY
+        )
+        self.convert_btn.pack(fill="x", pady=(0, 6))
+
+        # Clear All Button directly BELOW Start (34px tall, radius 10)
+        self.clear_btn = ctk.CTkButton(
+            actions_frame,
+            text=" Clear All",
+            image=get_icon("trash_danger", size=(15, 15)),
+            compound="left",
+            height=32,
+            corner_radius=theme.RADIUS_BUTTON,
+            fg_color="transparent",
+            hover_color=theme.DANGER_SOFT_FILL,
+            border_width=1,
+            border_color=theme.DANGER_BORDER,
+            text_color=theme.DANGER_TEXT,
+            font=theme.FONT_BUTTON_GHOST
+        )
+        self.clear_btn.pack(fill="x")
+
+    # ==================================================
+    # 6. Sidebar Footer
+    # ==================================================
+    def _build_footer(self, parent):
+        div = ctk.CTkFrame(parent, height=1, fg_color=theme.BORDER_LINE)
+        div.pack(fill="x", pady=(0, 8))
+
+        footer_row = ctk.CTkFrame(parent, fg_color="transparent")
+        footer_row.pack(fill="x", pady=(0, 2))
+
+        # 30px Circular Avatar "SK"
+        avatar = ctk.CTkFrame(
+            footer_row,
+            width=28,
+            height=28,
+            corner_radius=14,
+            fg_color=theme.BG_SURFACE_2,
+            border_width=1,
+            border_color=theme.BORDER_LINE_STRONG
+        )
+        avatar.pack(side="left", padx=(0, 10))
+        avatar.pack_propagate(False)
 
         ctk.CTkLabel(
-            dev_frame,
-            text="👤 Developed by ",
-            font=("Segoe UI", 13.5),
-            text_color="#e4e4e7"
+            avatar,
+            text="SK",
+            font=theme.FONT_FOOTER_AVATAR,
+            text_color=theme.TEXT_MUTED
+        ).pack(expand=True)
+
+        meta = ctk.CTkFrame(footer_row, fg_color="transparent")
+        meta.pack(side="left", fill="both", expand=True)
+
+        name_row = ctk.CTkFrame(meta, fg_color="transparent")
+        name_row.pack(anchor="w")
+
+        ctk.CTkLabel(
+            name_row,
+            text="Developed by ",
+            font=theme.FONT_FOOTER_DEV,
+            text_color=theme.TEXT_MUTED
         ).pack(side="left")
 
         ctk.CTkLabel(
-            dev_frame,
+            name_row,
             text="Suraj Kumar",
-            font=("Segoe UI", 13.5, "bold"),
-            text_color="#60a5fa"
+            font=theme.FONT_FOOTER_NAME,
+            text_color=theme.ACCENT_TEXT
         ).pack(side="left")
 
-        # 2. Email Address
         ctk.CTkLabel(
-            self.brand_footer,
+            meta,
             text="suraj.kumar@xecurify.com",
-            font=("Segoe UI", 11),
-            text_color="#a1a1aa"
-        ).pack(pady=(0, 12))
+            font=theme.FONT_FOOTER_EMAIL,
+            text_color=theme.TEXT_DIM,
+            anchor="w"
+        ).pack(fill="x")
 
     # ==================================================
-    # Event Callbacks & Helpers
+    # State Helpers & Callbacks
     # ==================================================
+
+    def set_convert_button_state(self, mode: str, text: str = None):
+        """
+        Updates Start Conversion button visual state:
+          - 'disabled': surface fill, dim text, 1px line border, play_dim icon
+          - 'enabled': solid orange fill, dark text, play_dark icon
+          - 'converting': accent soft fill, accent border, accent text, loader icon
+        """
+        if mode == "disabled":
+            self.convert_btn.configure(
+                state="disabled",
+                fg_color=theme.BG_SURFACE,
+                border_width=1,
+                border_color=theme.BORDER_LINE,
+                text_color=theme.TEXT_DIM,
+                image=get_icon("play_dim", size=(16, 16)),
+                text=" Start Conversion"
+            )
+        elif mode == "enabled":
+            self.convert_btn.configure(
+                state="normal",
+                fg_color=theme.ACCENT,
+                hover_color=theme.ACCENT_HOVER,
+                border_width=0,
+                text_color=theme.TEXT_ON_ACCENT,
+                image=get_icon("play_dark", size=(16, 16)),
+                text=" Start Conversion"
+            )
+        elif mode == "converting":
+            self.convert_btn.configure(
+                state="disabled",
+                fg_color=theme.ACCENT_SOFT_FILL,
+                border_width=1,
+                border_color=theme.ACCENT_BORDER,
+                text_color=theme.ACCENT_TEXT,
+                image=get_icon("loader_accent", size=(16, 16)),
+                text=text or " Converting..."
+            )
 
     def set_preset(self, q_value):
         if hasattr(self, "lossless_switch") and self.lossless_switch.get() == 1:
             self.lossless_switch.deselect()
             self.quality_slider.configure(state="normal")
         self.quality_slider.set(q_value)
-        self.quality_label.configure(text=f"{int(q_value)}%", text_color="#60a5fa")
+        self.quality_label.configure(text=f"{int(q_value)}%", text_color=theme.ACCENT_TEXT)
+        self._highlight_preset(q_value)
         if hasattr(self.master, "on_compression_settings_changed"):
             self.master.on_compression_settings_changed(immediate=True)
+
+    def _highlight_preset(self, active_val):
+        for q, btn in getattr(self, "preset_chips", {}).items():
+            if q == active_val:
+                btn.configure(
+                    fg_color=theme.ACCENT_SOFT_FILL,
+                    border_color=theme.ACCENT_BORDER,
+                    text_color=theme.ACCENT_TEXT
+                )
+            else:
+                btn.configure(
+                    fg_color=theme.BG_SURFACE,
+                    border_color=theme.BORDER_LINE,
+                    text_color=theme.TEXT_PRIMARY
+                )
 
     def update_quality(self, value):
         if hasattr(self, "lossless_switch") and self.lossless_switch.get() == 1:
             return
-        self.quality_label.configure(text=f"{int(value)}%")
+        val_int = int(value)
+        self.quality_label.configure(text=f"{val_int}%", text_color=theme.ACCENT_TEXT)
+        self._highlight_preset(val_int)
         if hasattr(self.master, "on_compression_settings_changed"):
             self.master.on_compression_settings_changed(immediate=False)
 
     def toggle_lossless(self):
         if self.lossless_switch.get() == 1:
             self.quality_slider.configure(state="disabled")
-            self.quality_label.configure(text="Lossless", text_color="#a1a1aa")
+            self.quality_label.configure(text="Lossless", text_color=theme.TEXT_MUTED)
+            self._highlight_preset(None)
         else:
             self.quality_slider.configure(state="normal")
-            self.quality_label.configure(
-                text=f"{int(self.quality_slider.get())}%",
-                text_color="#60a5fa"
-            )
+            val_int = int(self.quality_slider.get())
+            self.quality_label.configure(text=f"{val_int}%", text_color=theme.ACCENT_TEXT)
+            self._highlight_preset(val_int)
         if hasattr(self.master, "on_compression_settings_changed"):
             self.master.on_compression_settings_changed(immediate=True)
 
@@ -373,8 +610,7 @@ class Sidebar(ctk.CTkFrame):
         self.output_entry.configure(state="readonly")
         self.open_output_btn.configure(
             state="normal",
-            fg_color="#3f3f46",
-            text_color="#ffffff"
+            text_color=theme.TEXT_PRIMARY
         )
 
     def clear_output_folder(self):
@@ -383,6 +619,5 @@ class Sidebar(ctk.CTkFrame):
         self.output_entry.configure(state="readonly")
         self.open_output_btn.configure(
             state="disabled",
-            fg_color="#27272a",
-            text_color="#a1a1aa"
+            text_color=theme.TEXT_MUTED
         )
