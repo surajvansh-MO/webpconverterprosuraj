@@ -1,13 +1,30 @@
 # 🖼️ WebP Converter Pro
 
-**WebP Converter Pro** is a high-performance, modern batch image conversion desktop app built to convert your images into optimized **WebP** format with maximum efficiency and quality control.
+**WebP Converter Pro** is a high-performance, modern batch image conversion desktop app built to convert your images into optimized **WebP** format with maximum efficiency, quality control, and universal multi-format support.
+
+---
+
+## 🌟 Universal Format Support (100+ Types)
+
+WebP Converter Pro converts virtually any image or graphic file directly to modern, lightweight **WebP**:
+
+| Category | Supported Formats | Engine |
+| :--- | :--- | :--- |
+| **Vector Graphics** | `SVG`, `SVGZ`, `AI`, `EPS`, `PS`, `PDF`, `WMF`, `EMF`, `CGM`, `SK`, `SK1`, `CDR`, `VSD`, `VSDX`, `PES` | resvg (Rust) / pypdfium2 / Pillow |
+| **Modern Web & Mobile** | `WEBP`, `AVIF`, `AVIS`, `HEIC`, `HEIF`, `HIF`, `HEICS`, `HEIFS` | libheif / pillow-heif / pillow-avif |
+| **Standard Web & Photos** | `PNG`, `APNG`, `JPG`, `JPEG`, `JPE`, `JFIF`, `JIF`, `JFI`, `BMP`, `DIB`, `GIF`, `TIFF`, `TIF`, `ICO`, `CUR` | Pillow Engine |
+| **Camera RAW Photos** | `RAW`, `RAF` (Fuji), `CR2` / `CR3` / `CRW` (Canon), `NEF` / `NRW` (Nikon), `ARW` / `SRF` / `SR2` (Sony), `DNG` (Adobe), `ORF` (Olympus), `RW2` (Panasonic), `PEF` / `PTX` (Pentax), `3FR` (Hasselblad), `MRW` (Minolta), `DCR` / `DCS` / `K25` / `KDC` (Kodak), `ERF` (Epson), `IIQ` (Phase One), `MEF` / `MOS` (Mamiya / Leaf), `SRW` (Samsung), `X3F` (Sigma) | rawpy (LibRaw) |
+| **Design & 3D Textures** | `PSD`, `PSB` (Photoshop), `TGA`, `ICB`, `VDA`, `VST`, `DDS`, `BLP`, `QOI`, `ODG`, `HDR` | psd-tools / Pillow |
+| **Specialist & Scientific** | `JP2`, `J2K`, `JPF`, `JPX`, `PPM`, `PGM`, `PBM`, `PNM`, `PCX`, `DCX`, `ICNS`, `SGI`, `RGB`, `RGBA`, `BW`, `XBM`, `XPM`, `FITS`, `IM`, `MSP`, `PALM`, `PCD`, `FLI`, `FLC`, `DCM` (DICOM), `DPX`, `EXR`, `FAX`, `HRZ`, `MNG`, `MTV`, `PFM`, `PICON`, `PICT`, `PIX`, `PWP`, `RLA`, `SCT`, `SFW`, `SUN`, `ART`, `WPG` | pydicom / imageio / Pillow |
 
 ---
 
 ## ✨ Features
 
 - **⚡ Fast Batch Conversion**: Convert individual files or entire folders simultaneously.
-- **📁 Multi-Format Support**: Supports `PNG`, `JPG`, `JPEG`, `AVIF`, `BMP`, `TIFF`, `GIF`, and `ICO`.
+- **🎨 Universal Vector & Raster Support**: Full support for SVG, Camera RAW, Apple HEIC, Adobe Photoshop PSD, and 100+ formats.
+- **🔄 Smart EXIF Auto-Orientation**: Automatically rotates photos from smartphones (iPhone/Android) and digital cameras to upright.
+- **🎞️ Animated Multi-Frame Preservation**: Animated GIFs, animated WebPs, and APNGs preserve frame timings and animation loops.
 - **🎛️ Custom Quality Controls**: Adjustable compression slider (1% – 100%) or **Lossless WebP Mode** for 100% pixel accuracy.
 - **📍 Real-Time Output Path Preview**: View the exact output file destination path for each image in the UI before converting.
 - **🖱️ Drag & Drop Support**: Drag images or folders directly into the app window.
@@ -34,7 +51,7 @@ No installation or admin permissions required!
 ## 📖 How to Use
 
 1. **Add Images**:
-   - Click **📂 Files** to pick images, **📁 Folder** to select an entire folder, or simply **Drag & Drop** images into the app window.
+   - Click **📂 Files** to pick images, **📁 Folder** to select an entire folder, or simply **Drag & Drop** files directly into the window.
 2. **Configure Settings**:
    - Adjust the **Quality Slider** (e.g., 80%) or check **Lossless WebP Mode**.
 3. **Set Destination (Optional)**:

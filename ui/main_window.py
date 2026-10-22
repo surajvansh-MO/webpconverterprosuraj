@@ -5,6 +5,7 @@ from tkinterdnd2 import TkinterDnD, DND_FILES
 from ui.sidebar import Sidebar
 from ui.file_list import FileList
 from ui.actions import AppActions
+from converter import SUPPORTED_EXTENSIONS
 
 
 class WebPConverterApp(ctk.CTk, TkinterDnD.DnDWrapper, AppActions):
@@ -48,18 +49,8 @@ class WebPConverterApp(ctk.CTk, TkinterDnD.DnDWrapper, AppActions):
         # None = Save beside original image
         self.output_folder = None
 
-        # Supported image formats
-        self.supported_extensions = {
-            ".png",
-            ".jpg",
-            ".jpeg",
-            ".bmp",
-            ".tiff",
-            ".tif",
-            ".gif",
-            ".avif",
-            ".ico",
-        }
+        # Supported image formats (85+ formats: SVG, RAW, HEIC, PSD, PDF, and all standard formats)
+        self.supported_extensions = SUPPORTED_EXTENSIONS
 
         # ==================================================
         # Window Layout

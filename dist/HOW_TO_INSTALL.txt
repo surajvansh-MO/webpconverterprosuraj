@@ -2,8 +2,9 @@
                      WebP Converter Pro - Quick Start Guide
 ========================================================================
 
-WebP Converter Pro is a portable desktop app. No installation or admin
-privileges are required to run this software.
+WebP Converter Pro is a high-performance portable desktop app for Windows.
+No installation or administrator privileges are required to run this software.
+Supports 100+ formats: SVG, PNG, JPG, HEIC, AVIF, PSD, PDF, Camera RAW, and more!
 
 ------------------------------------------------------------------------
 HOW TO RUN THE APPLICATION:
@@ -27,8 +28,8 @@ HOW TO CONVERT IMAGES:
 ------------------------------------------------------------------------
 
 1. ADD IMAGES:
-   - Click "Files" to pick images, "Folder" to select an entire folder,
-     or simply Drag & Drop image files into the app.
+   - Click "Files" to pick images/vectors/RAW photos, "Folder" to select
+     an entire folder, or simply Drag & Drop files directly into the app window.
 
 2. SET QUALITY & OUTPUT DESTINATION:
    - Adjust the Quality slider (e.g., 80%) or select Lossless mode.
@@ -36,7 +37,8 @@ HOW TO CONVERT IMAGES:
      Click "Choose" under Destination Folder to pick a custom output folder.
 
 3. START CONVERSION:
-   - Click "Start Conversion" to convert all images into WebP format!
+   - Click "Convert" on any specific file or click "Start Conversion"
+     to convert all images in batch into WebP format!
 
 ------------------------------------------------------------------------
 SUPPORT & DEVELOPER INFO:

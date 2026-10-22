@@ -36,15 +36,23 @@ class AppActions:
                         self.file_statuses[img] = "Waiting"
                         added = True
 
-            elif (
-                file.is_file()
-                and file.suffix.lower() in self.supported_extensions
-                and file not in self.selected_files
-            ):
+            elif file.is_file() and file not in self.selected_files:
+                ext = file.suffix.lower()
+                can_add = ext in self.supported_extensions
+                if not can_add:
+                    # Allow user to convert any custom/specialist image format if decodable
+                    try:
+                        from converter import load_image
+                        test_img = load_image(file)
+                        test_img.close()
+                        can_add = True
+                    except Exception:
+                        can_add = False
 
-                self.selected_files.append(file)
-                self.file_statuses[file] = "Waiting"
-                added = True
+                if can_add:
+                    self.selected_files.append(file)
+                    self.file_statuses[file] = "Waiting"
+                    added = True
 
         if added:
 
@@ -80,15 +88,41 @@ class AppActions:
 
     def browse_images(self):
 
+        all_patterns = " ".join(f"*{ext}" for ext in sorted(self.supported_extensions))
+
         filetypes = [
             (
-                "Supported Images",
-                "*.png *.jpg *.jpeg *.bmp *.tiff *.tif *.gif *.avif *.ico"
+                "All Supported Formats",
+                all_patterns
+            ),
+            (
+                "Vector Graphics (*.svg, *.svgz, *.eps, *.pdf, *.ai)",
+                "*.svg *.svgz *.eps *.ps *.pdf *.ai"
+            ),
+            (
+                "Standard Web & Photo (*.png, *.jpg, *.jpeg, *.webp, *.gif, *.bmp, *.ico)",
+                "*.png *.apng *.jpg *.jpeg *.jpe *.jfif *.webp *.gif *.bmp *.dib *.ico *.cur"
+            ),
+            (
+                "High-Efficiency & Mobile (*.heic, *.heif, *.avif)",
+                "*.heic *.heif *.hif *.heics *.heifs *.avif *.avis"
+            ),
+            (
+                "Camera RAW Photos (*.raw, *.cr2, *.cr3, *.nef, *.arw, *.dng, ...)",
+                "*.raw *.cr2 *.cr3 *.nef *.nrw *.arw *.srf *.sr2 *.dng *.orf *.rw2 *.pef *.raf *.x3f *.3fr *.mrw *.srw"
+            ),
+            (
+                "Adobe & Design (*.psd, *.psb, *.tiff, *.tga, *.dds)",
+                "*.psd *.psb *.tiff *.tif *.tga *.dds *.hdr"
+            ),
+            (
+                "All Files (*.*)",
+                "*.*"
             )
         ]
 
         files = filedialog.askopenfilenames(
-            title="Select Images",
+            title="Select Images to Convert to WebP",
             filetypes=filetypes
         )
 

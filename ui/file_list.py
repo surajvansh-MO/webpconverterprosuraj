@@ -19,15 +19,41 @@ class FileList(ctk.CTkFrame):
 
         # Color mapping for format badges
         self.format_colors = {
+            "SVG": "#f97316",
+            "SVGZ": "#f97316",
             "PNG": "#38bdf8",
+            "APNG": "#38bdf8",
             "JPG": "#34d399",
             "JPEG": "#34d399",
+            "JFIF": "#34d399",
+            "WEBP": "#2dd4bf",
             "AVIF": "#c084fc",
+            "HEIC": "#ec4899",
+            "HEIF": "#ec4899",
             "BMP": "#f43f5e",
             "TIFF": "#fbbf24",
             "TIF": "#fbbf24",
             "GIF": "#a78bfa",
             "ICO": "#38bdf8",
+            "PSD": "#60a5fa",
+            "PSB": "#60a5fa",
+            "PDF": "#ef4444",
+            "AI": "#f59e0b",
+            "EPS": "#f59e0b",
+            "RAW": "#e11d48",
+            "CR2": "#e11d48",
+            "CR3": "#e11d48",
+            "NEF": "#e11d48",
+            "ARW": "#e11d48",
+            "DNG": "#e11d48",
+            "ORF": "#e11d48",
+            "RW2": "#e11d48",
+            "RAF": "#e11d48",
+            "TGA": "#14b8a6",
+            "DDS": "#8b5cf6",
+            "HDR": "#06b6d4",
+            "ICNS": "#a855f7",
+            "JP2": "#10b981",
         }
 
         # ==================================================
@@ -160,7 +186,7 @@ class FileList(ctk.CTkFrame):
         tags_frame = ctk.CTkFrame(placeholder_card, fg_color="transparent")
         tags_frame.pack()
 
-        for ext in ["PNG", "JPG", "AVIF", "BMP", "TIFF", "GIF"]:
+        for ext in ["SVG", "PNG", "JPG", "HEIC", "AVIF", "RAW", "PSD", "GIF", "+75 More"]:
             color = self.format_colors.get(ext, "#94a3b8")
             pill = ctk.CTkFrame(
                 tags_frame,
@@ -418,7 +444,7 @@ class FileList(ctk.CTkFrame):
             ctk.CTkLabel(
                 format_badge,
                 text=ext,
-                font=("Segoe UI", 10, "bold"),
+                font=("Segoe UI", 8 if len(ext) > 4 else 10, "bold"),
                 text_color=format_col
             ).pack(expand=True)
 

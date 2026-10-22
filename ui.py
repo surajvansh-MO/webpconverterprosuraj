@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import filedialog
 from pathlib import Path
-from converter import convert_image
+from converter import convert_image, SUPPORTED_EXTENSIONS
 import threading
 
 
@@ -25,19 +25,7 @@ class WebPConverterApp(ctk.CTk):
         # ----------------------------
         self.create_widgets()
         self.selected_files = []
-        self.supported_extensions = {
-            ".png",
-            ".jpg",
-            ".jpeg",
-            ".bmp",
-            ".tiff",
-            ".tif",
-            ".gif",
-            ".avif",
-            ".heic",
-            ".heif",
-            ".ico"
-        }
+        self.supported_extensions = SUPPORTED_EXTENSIONS
         self.file_rows = []
 
     def create_widgets(self):
@@ -297,11 +285,15 @@ class WebPConverterApp(ctk.CTk):
 
     def browse_images(self):
 
+        all_patterns = " ".join(f"*{ext}" for ext in sorted(self.supported_extensions))
         filetypes = [
-            (
-                "Supported Images",
-                "*.png *.jpg *.jpeg *.bmp *.tiff *.tif *.gif *.avif *.heic *.heif *.ico"
-            )
+            ("All Supported Formats", all_patterns),
+            ("Vector Graphics (*.svg, *.svgz, *.eps, *.pdf, *.ai)", "*.svg *.svgz *.eps *.ps *.pdf *.ai"),
+            ("Standard Web & Photo (*.png, *.jpg, *.jpeg, *.webp, *.gif, *.bmp)", "*.png *.apng *.jpg *.jpeg *.jpe *.jfif *.webp *.gif *.bmp *.dib *.ico"),
+            ("High-Efficiency & Mobile (*.heic, *.heif, *.avif)", "*.heic *.heif *.hif *.heics *.heifs *.avif *.avis"),
+            ("Camera RAW Photos (*.raw, *.cr2, *.cr3, *.nef, *.arw, *.dng, ...)", "*.raw *.cr2 *.cr3 *.nef *.nrw *.arw *.srf *.sr2 *.dng *.orf *.rw2 *.pef *.raf *.x3f *.3fr *.mrw *.srw"),
+            ("Adobe & Design (*.psd, *.psb, *.tiff, *.tga, *.dds)", "*.psd *.psb *.tiff *.tif *.tga *.dds *.hdr"),
+            ("All Files (*.*)", "*.*")
         ]
 
         files = filedialog.askopenfilenames(
